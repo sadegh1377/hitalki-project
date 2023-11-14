@@ -1,53 +1,21 @@
 <template>
     <div>
-        <div v-for="(day ,index) in week" :key="index">
-            {{ day.day.hours }}
-        </div>
-
-        {{addThirtyMinToTimestamp(new Date())}}
+        <TeacherSchedule/>
     </div>
 </template>
 
 <script>
+
+import TeacherSchedule from "@/components/TeacherSchedule.vue";
 
 export default {
     name: 'HomeView',
     data() {
         return {
             switch1: false,
-            week: [
-                {
-                    day: {
-                        name: 'monday',
-                        hours: [
-                            {
-                                timeStamp: new Date(),
-                                selected: false,
-                                reserved: false,
-                            }
-                        ]
-                    }
-                },
-                {
-                    day: {
-                        name: 'monday',
-                        hours: [
-                            {
-                                timestamp: new Date(),
-                                selected: false,
-                                reserved: false,
-                            }
-                        ]
-                    }
-                }
-            ]
+
         }
     },
-    methods: {
-        addThirtyMinToTimestamp(date) {
-            return new Date(date.getTime() + 30*60000);
-        }
-    },
-    components: {},
+    components: {TeacherSchedule},
 }
 </script>

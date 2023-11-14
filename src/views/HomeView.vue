@@ -1,18 +1,53 @@
 <template>
-  <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+    <div>
+        <div v-for="(day ,index) in week" :key="index">
+            {{ day.day.hours }}
+        </div>
+
+        {{addThirtyMinToTimestamp(new Date())}}
+    </div>
 </template>
 
 <script>
-// @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue'
 
 export default {
-  name: 'HomeView',
-  components: {
-    HelloWorld
-  }
+    name: 'HomeView',
+    data() {
+        return {
+            switch1: false,
+            week: [
+                {
+                    day: {
+                        name: 'monday',
+                        hours: [
+                            {
+                                timeStamp: new Date(),
+                                selected: false,
+                                reserved: false,
+                            }
+                        ]
+                    }
+                },
+                {
+                    day: {
+                        name: 'monday',
+                        hours: [
+                            {
+                                timestamp: new Date(),
+                                selected: false,
+                                reserved: false,
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    methods: {
+        addThirtyMinToTimestamp(date) {
+            return new Date(date.getTime() + 30*60000);
+        }
+    },
+    components: {},
 }
 </script>

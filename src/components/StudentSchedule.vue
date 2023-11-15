@@ -13,8 +13,7 @@
                     <div class="flex-column">
                         <div class="hours py-3 mx-3"
                              v-show="hour.reservable === true || hour.reserved === true"
-                             :class="{'reserved': hour.reserved,
-                             'selected': hour.selected}"
+                             :class="{'reserved': hour.reserved, 'selected': hour.selected}"
                              v-for="(hour,hourIndex) in day.hours"
                              @click="selectHour(dayIndex,hourIndex,hourIndex+1)"
                              :key="hourIndex">
@@ -43,76 +42,144 @@ export default {
     name: "StudentSchedule",
     data() {
         return {
-            selectedHourIndex: null,
-            selectedNextHourIndex: null,
-            selectedDayIndex: null,
-            isHourSelected: false
+            selectedHourIndex: null, //
+            selectedNextHourIndex: null, //
+            selectedDayIndex: null,//
+            isHourSelected: false //
         }
     },
     methods: {
+        // isHourHoverable(dayIndex) {
+        //     let week = this.$store.getters.getWeek
+        //     for (let i = 0; i < week[dayIndex].hours.length - 1; i++) {
+        //         if (week[dayIndex].hours[i].reserved !== week[dayIndex].hours[i + 1].reserved
+        //             || (Math.abs(week[dayIndex].hours[i].timestamp - week[dayIndex].hours[i + 1].timestamp) / 36e5) > .5) {
+        //             return "true"
+        //         }
+        //     }
+        //
+        // },
+
+
+        /**
+         * This method create the string for the tooltip.
+         * if an hour is reserved it shows a different message .
+         *
+         * @param hour the base hour to get timestamp from
+         * @returns {string} the string that shown on tooltip
+         */
         getHourToolTip(hour) {
+
+            // check if hour is reserved
             if (hour.reserved) {
                 return "رزرو شده"
             }
+
+            // get timestamp one hour after base timestamp
             const OneHourAfter = new Date(hour.timestamp.getTime() + 60 * 60000)
+            // changing date to persian
             const hoveredDate = hour.timestamp.toLocaleDateString('fa-FA', {
                 month: 'long',
                 day: 'numeric',
                 weekday: 'long'
             })
+            // the getTimeFromDate method called inorder to convert date to minute and hour and sanitized it
             return `${hoveredDate} ${this.getTimeFromDate(hour.timestamp)} - ${this.getTimeFromDate(OneHourAfter)}`
 
         },
+        /**
+         * This method call in getHourToolTip method
+         *
+         * @param timestamp the timestamp to get minute and hour from
+         * @returns {string} the sanitized date
+         */
         getTimeFromDate(timestamp) {
+            // adding 0 to first of each number
+            // this make 2 digits number like 06 and 02 and because its getting slice from the end
+            // it stays the same
+            // for bigger number it makes number like 022 and 030 because its getting slice from the end
+            // the 0 get cuts from it
             const pad = num => ("0" + num).slice(-2);
             let hours = timestamp.getHours(),
                 minutes = timestamp.getMinutes()
             return pad(hours) + ":" + pad(minutes)
         },
+        /**
+         * This Method select two hours that are 1 hour apart
+         *
+         * @param dayIndex the index of the day that hour object belong to
+         * @param hourIndex the index of hour object that been clicked
+         * @param nextHourIndex the index of next hour object
+         */
         selectHour(dayIndex, hourIndex, nextHourIndex) {
+            // get the week array from the getter
             let week = this.$store.getters.getWeek
-            let nextReservedHour = this.getNextReservedHour(dayIndex, nextHourIndex)
 
-            if (nextReservedHour === undefined) return;
+            // get the immediate next hour object that is reservable
+            let nextReservableHour = this.getNextReservableHour(dayIndex, nextHourIndex)
 
+            // checking if nextReservableHour is undefined
+            if (nextReservableHour === undefined) return;
+
+            // inorder to prevent to cross over hours array length
             if (nextHourIndex >= week[dayIndex].hours.length) return;
 
+            // inorder to prevent selecting 2 reserved hour
             if (week[dayIndex].hours[hourIndex].reserved === true ||
                 week[dayIndex].hours[nextHourIndex].reserved === true) return;
 
-            if (Math.abs(week[dayIndex].hours[hourIndex].timestamp
-                - nextReservedHour.timestamp) / 36e5 > .5) return;
+            // to make sure that selected object is one hour apart
+            if (Math.abs(week[dayIndex].hours[hourIndex].timestamp - nextReservableHour.timestamp) / 36e5 > .5) return;
 
+            // in order to unselect the previous selected hours
             if (this.isHourSelected) {
+                // for simplifying code
+                let previousHourObject = week[this.selectedDayIndex].hours[this.selectedHourIndex]
+                let previousNextHourObject = week[this.selectedDayIndex].hours[this.selectedNextHourIndex]
 
+                // check if the same hour is clicked
                 if (this.selectedDayIndex === dayIndex && this.selectedHourIndex === hourIndex &&
                     this.selectedNextHourIndex === nextHourIndex) {
-                    week[this.selectedDayIndex].hours[this.selectedHourIndex].selected = !week[this.selectedDayIndex].hours[this.selectedHourIndex].selected
-                    week[this.selectedDayIndex].hours[this.selectedNextHourIndex].selected = !week[this.selectedDayIndex].hours[this.selectedNextHourIndex].selected
+
+                    // toggle the selected property on hour object
+                    previousHourObject.selected = !previousHourObject.selected
+                    previousNextHourObject.selected = !previousNextHourObject.selected
+                    // toggle isHourSelected to make sure that the user can click another hour
                     this.isHourSelected = !this.isHourSelected
                 } else {
-                    week[this.selectedDayIndex].hours[this.selectedHourIndex].selected = false
-                    week[this.selectedDayIndex].hours[this.selectedNextHourIndex].selected = false
+                    // if the same hour is not clicked unselect previous selected hour
+                    // and select new hour
+                    previousHourObject.selected = false
+                    previousNextHourObject.selected = false
                     week[dayIndex].hours[hourIndex].selected = true
                     week[dayIndex].hours[nextHourIndex].selected = true
+                    // to show that an hour is selected
                     this.isHourSelected = true
                 }
-                // week[this.selectedDayIndex].hours[this.selectedHourIndex].selected = false
-                // week[this.selectedDayIndex].hours[this.nextSelectedHourIndex].selected = false
             } else {
+                // select an hour
                 week[dayIndex].hours[hourIndex].selected = true
                 week[dayIndex].hours[nextHourIndex].selected = true
+                // to show that an hour is selected
                 this.isHourSelected = true
             }
+            // save current selected hours index to use as previous
             this.selectedHourIndex = hourIndex
             this.selectedNextHourIndex = nextHourIndex
             this.selectedDayIndex = dayIndex
 
-            // console.log(week[dayIndex].hours[hourIndex].timestamp)
-            // console.log(week[dayIndex].hours[nextHourIndex].timestamp)
         },
-        getNextReservedHour(dayIndex, nextHourIndex) {
+        /**
+         * Get the immediate next hour object that is reservable
+         *
+         * @param dayIndex the index of the day that hour object belong to
+         * @param nextHourIndex the index of next hour object
+         * @returns {*} the immediate next hour object that is reservable
+         */
+        getNextReservableHour(dayIndex, nextHourIndex) {
+            // get the week array from the getter
             let week = this.$store.getters.getWeek
+            // loop through week state to get the immediate next hour object that is reservable
             for (let i = nextHourIndex; i < week[dayIndex].hours.length; i++) {
                 if (week[dayIndex].hours[i].reservable === true) {
                     return week[dayIndex].hours[i]
@@ -120,12 +187,6 @@ export default {
             }
         }
     },
-    mounted() {
-        // for (let i = 0; i < 7; i++) {
-        //     // this.$store.dispatch('getDaysOfWeekTimestamp', i)
-        //     this.$store.dispatch('createDayOfWeek', i)
-        // }
-    }
 }
 
 </script>
@@ -169,6 +230,10 @@ export default {
 .hours {
     border-radius: 3px;
     cursor: pointer;
+}
+
+.hours[class="reserved"]:hover {
+    border: none !important;
 }
 
 .hours:hover {

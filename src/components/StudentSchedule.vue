@@ -5,9 +5,11 @@
                 <div class="week-cols text-center elevation-1 ml-3 mb-10"
                      v-for="(day,dayIndex) in this.$store.getters.getWeek" :key="dayIndex">
                     <div class="week-header pt-3 mb-6" dir="rtl">
-                        <p class="day-name mx-3">{{
-                            day.timestamp.toLocaleDateString('fa-FA', {weekday: 'long'})
-                            }}</p>
+                        <p class="day-name mx-3">
+                            <!-- inorder to get the name of week day in persian -->
+                            {{ day.timestamp.toLocaleDateString('fa-FA', {weekday: 'long'}) }}
+                        </p>
+                        <!-- inorder to get the name of month and its day in persian -->
                         <p> {{ day.timestamp.toLocaleDateString('fa-FA', {month: 'long', day: 'numeric'}) }}</p>
                     </div>
                     <div class="flex-column">
@@ -126,7 +128,7 @@ export default {
 
             // inorder to prevent selecting 2 reserved hour
             if (week[dayIndex].hours[hourIndex].reserved === true ||
-                week[dayIndex].hours[nextHourIndex].reserved === true){
+                week[dayIndex].hours[nextHourIndex].reserved === true) {
                 // set the proper error message
                 this.errorMessages = "ساعت انتخاب شده یا ساعت بعد از آن رزرو شده است."
                 // close alert massage

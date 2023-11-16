@@ -4,31 +4,33 @@
             <div id="TeacherSchedule" class="week-container mx-10 mt-10 d-flex flex-row">
                 <div class="week-cols text-center elevation-1 ml-3 mb-10"
                      v-for="(day,index) in $store.getters.getWeek" :key="index">
-                            <div class="week-header pt-3 mb-6" dir="rtl">
-                                <p class="day-name mx-3">{{
-                                    day.timestamp.toLocaleDateString('fa-FA', {weekday: 'long'})
-                                    }}</p>
-                                <p> {{ day.timestamp.toLocaleDateString('fa-FA', {month: 'long', day: 'numeric'}) }}</p>
-                            </div>
-                            <div class="flex-column">
-                                <div class="hours my-5 mx-6"
-                                     :class="{'reservable': hour.reservable, 'reserved': hour.reserved}"
-                                     v-for="(hour,index) in day.hours"
-                                     @click="determineSingleClickOrDbClick(hour)"
-                                     :key="index">
-                                    <v-tooltip top
-                                               transition="none"
-                                               color="#2d2c42">
-                                        <template v-slot:activator="{ on, attrs }">
+                    <div class="week-header pt-3 mb-6" dir="rtl">
+                        <p class="day-name mx-3">
+                            <!-- inorder to get the name of week day in persian -->
+                            {{ day.timestamp.toLocaleDateString('fa-FA', {weekday: 'long'}) }}
+                        </p>
+                        <!-- inorder to get the name of month and its day in persian -->
+                        <p> {{ day.timestamp.toLocaleDateString('fa-FA', {month: 'long', day: 'numeric'}) }}</p>
+                    </div>
+                    <div class="flex-column">
+                        <div class="hours my-5 mx-6"
+                             :class="{'reservable': hour.reservable, 'reserved': hour.reserved}"
+                             v-for="(hour,index) in day.hours"
+                             @click="determineSingleClickOrDbClick(hour)"
+                             :key="index">
+                            <v-tooltip top
+                                       transition="none"
+                                       color="#2d2c42">
+                                <template v-slot:activator="{ on, attrs }">
                                 <span v-bind="attrs"
                                       v-on="on">
                                     {{ getTimeFromDate(hour.timestamp) }}
                                 </span>
-                                        </template>
-                                        {{ getHourToolTip(hour.timestamp) }}
-                                    </v-tooltip>
-                                </div>
-                            </div>
+                                </template>
+                                {{ getHourToolTip(hour.timestamp) }}
+                            </v-tooltip>
+                        </div>
+                    </div>
                 </div>
             </div>
             <v-btn

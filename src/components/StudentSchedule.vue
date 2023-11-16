@@ -33,6 +33,9 @@
                 </div>
             </div>
         </v-container>
+        <v-alert dir="rtl" type="error" class="alert mx-auto mt-5" v-if="errorMessages">
+            <span class="mr-5"> {{ errorMessages }}</span>
+        </v-alert>
     </div>
 </template>
 
@@ -42,25 +45,22 @@ export default {
     name: "StudentSchedule",
     data() {
         return {
-            selectedHourIndex: null, //
-            selectedNextHourIndex: null, //
-            selectedDayIndex: null,//
-            isHourSelected: false //
+            errorMessages: null, // to show error messages
+            selectedHourIndex: null, // previous hourIndex
+            selectedNextHourIndex: null, // previous nextHourIndex
+            selectedDayIndex: null, // previous dayIndex
+            isHourSelected: false // to check if an hour is selected
         }
     },
     methods: {
-        // isHourHoverable(dayIndex) {
-        //     let week = this.$store.getters.getWeek
-        //     for (let i = 0; i < week[dayIndex].hours.length - 1; i++) {
-        //         if (week[dayIndex].hours[i].reserved !== week[dayIndex].hours[i + 1].reserved
-        //             || (Math.abs(week[dayIndex].hours[i].timestamp - week[dayIndex].hours[i + 1].timestamp) / 36e5) > .5) {
-        //             return "true"
-        //         }
-        //     }
-        //
-        // },
-
-
+        /**
+         * inorder to close alert message after 3 second
+         */
+        closeAlertMessage() {
+            setTimeout(() => {
+                this.errorMessages = null
+            }, 3000)
+        },
         /**
          * This method create the string for the tooltip.
          * if an hour is reserved it shows a different message .
@@ -126,10 +126,22 @@ export default {
 
             // inorder to prevent selecting 2 reserved hour
             if (week[dayIndex].hours[hourIndex].reserved === true ||
-                week[dayIndex].hours[nextHourIndex].reserved === true) return;
+                week[dayIndex].hours[nextHourIndex].reserved === true){
+                // set the proper error message
+                this.errorMessages = "ساعت انتخاب شده یا ساعت بعد از آن رزرو شده است."
+                // close alert massage
+                this.closeAlertMessage()
+                return;
+            }
 
             // to make sure that selected object is one hour apart
-            if (Math.abs(week[dayIndex].hours[hourIndex].timestamp - nextReservableHour.timestamp) / 36e5 > .5) return;
+            if (Math.abs(week[dayIndex].hours[hourIndex].timestamp - nextReservableHour.timestamp) / 36e5 > .5) {
+                // set the proper error message
+                this.errorMessages = "ساعت انتخاب شده با ساعت بعدی بیش از یک ساعت فاصله زمانی دارد. "
+                // close alert massage
+                this.closeAlertMessage()
+                return;
+            }
 
             // in order to unselect the previous selected hours
             if (this.isHourSelected) {
@@ -192,6 +204,11 @@ export default {
 </script>
 
 <style scoped>
+
+.alert {
+    width: 40%;
+}
+
 .week-container {
     width: 1000px;
     height: 500px;

@@ -1,52 +1,70 @@
 <template>
-    <v-container>
-        <div id="TeacherSchedule" class="week-container mx-10 mt-10 d-flex flex-row">
-            <div class="week-cols text-center elevation-1 ml-3 mb-10"
-                 v-for="(day,index) in week" :key="index">
-                <div class="week-header pt-3 mb-6" dir="rtl">
-                    <p class="day-name mx-3">{{ day.timestamp.toLocaleDateString('fa-FA', {weekday: 'long'}) }}</p>
-                    <p> {{ day.timestamp.toLocaleDateString('fa-FA', {month: 'long', day: 'numeric'}) }}</p>
-                </div>
-                <div class="flex-column">
-                    <div class="hours my-5 mx-6"
-                         :class="{'reservable': hour.reservable, 'reserved': hour.reserved}"
-                         v-for="(hour,index) in day.hours"
-                         @click="determineSingleClickOrDbClick(hour)"
-                         :key="index">
-                        <v-tooltip top
-                                   transition="none"
-                                   color="#2d2c42">
-                            <template v-slot:activator="{ on, attrs }">
+    <div>
+        <v-container>
+            <div id="TeacherSchedule" class="week-container mx-10 mt-10 d-flex flex-row">
+                <div class="week-cols text-center elevation-1 ml-3 mb-10"
+                     v-for="(day,index) in $store.getters.getWeek" :key="index">
+                            <div class="week-header pt-3 mb-6" dir="rtl">
+                                <p class="day-name mx-3">{{
+                                    day.timestamp.toLocaleDateString('fa-FA', {weekday: 'long'})
+                                    }}</p>
+                                <p> {{ day.timestamp.toLocaleDateString('fa-FA', {month: 'long', day: 'numeric'}) }}</p>
+                            </div>
+                            <div class="flex-column">
+                                <div class="hours my-5 mx-6"
+                                     :class="{'reservable': hour.reservable, 'reserved': hour.reserved}"
+                                     v-for="(hour,index) in day.hours"
+                                     @click="determineSingleClickOrDbClick(hour)"
+                                     :key="index">
+                                    <v-tooltip top
+                                               transition="none"
+                                               color="#2d2c42">
+                                        <template v-slot:activator="{ on, attrs }">
                                 <span v-bind="attrs"
                                       v-on="on">
                                     {{ getTimeFromDate(hour.timestamp) }}
                                 </span>
-                            </template>
-                            {{ getHourToolTip(hour.timestamp) }}
-                        </v-tooltip>
-                    </div>
+                                        </template>
+                                        {{ getHourToolTip(hour.timestamp) }}
+                                    </v-tooltip>
+                                </div>
+                            </div>
                 </div>
             </div>
-        </div>
-    </v-container>
+            <v-btn
+                class="ml-15 mt-8"
+                color="primary"
+                elevation="2"
+                @click="$router.push({name:'StudentSchedule'})"
+            >ثبت تغییرات
+            </v-btn>
+        </v-container>
+    </div>
 </template>
 
 <script>
-import DragSelect from "dragselect";
 
 export default {
     name: "TeacherSchedule",
+
     data() {
         return {
-            week: [],
-            currentDate: new Date(),
-            timeIntervalUntilToday: [0, 24, 48, 72, 96, 120, 144],
-            clicks: 0
+            clicks: 0 // to count number of clicked on hour div
         }
     },
     methods: {
+        /**
+         * Since I could not find a proper solution for handling single-click and double-click
+         * on a same div, I handle it by setting a timer for a brief moment for every time that
+         * div is clicked if not clicked again on that brief moment its count as single click if
+         * clicked again the timer get clear.
+         * if only click once it call a method inorder to toggle reservable property on hour array.
+         *
+         * if click twice it call a method inorder to toggle reserved property on hour array.
+         *
+         * @param hour the object of hours arrays that got clicked
+         */
         determineSingleClickOrDbClick(hour) {
-            console.log(hour)
             this.clicks++;
             if (this.clicks === 1) {
                 this.timer = setTimeout(() => {
@@ -59,56 +77,64 @@ export default {
                 this.clicks = 0;
             }
         },
+        /**
+         * This method call in determineSingleClickOrDbClick method.
+         *
+         * @param hour the object of hours arrays that got clicked
+         */
         addToReservable(hour) {
             hour.reserved = false
             hour.reservable = !hour.reservable
         },
+        /**
+         * This method call in determineSingleClickOrDbClick method.
+         *
+         * @param hour the object of hours arrays that got clicked
+         */
         addToReserved(hour) {
             hour.reservable = false
             hour.reserved = !hour.reserved
         },
+        /**
+         * This method create the string for the tooltip.
+         *
+         * @param timestamp the base timestamp to show
+         * @returns {string} the string that shown on tooltip
+         */
         getHourToolTip(timestamp) {
+            // get timestamp thirty minutes after base timestamp
             const thirtyMinAfter = new Date(timestamp.getTime() + 30 * 60000)
-            const hoveredDate = timestamp.toLocaleDateString('fa-FA', {month: 'long', day: 'numeric', weekday: 'long'})
+            // changing date to persian
+            const hoveredDate = timestamp.toLocaleDateString('fa-FA',
+                {month: 'long', day: 'numeric', weekday: 'long'})
+            // the getTimeFromDate method called inorder to convert date to minute and hour and sanitized it
             return `${hoveredDate} ${this.getTimeFromDate(timestamp)} - ${this.getTimeFromDate(thirtyMinAfter)}`
 
         },
+        /**
+         * This method call in getHourToolTip method
+         *
+         * @param timestamp the timestamp to get minute and hour from
+         * @returns {string} the sanitized date
+         */
         getTimeFromDate(timestamp) {
+            // adding 0 to first of each number
+            // this make 2 digits number like 06 and 02 and because its getting slice from the end
+            // it stays the same
+            // for bigger number it makes number like 022 and 030 because its getting slice from the end
+            // the 0 get cuts from it
             const pad = num => ("0" + num).slice(-2);
             let hours = timestamp.getHours(),
                 minutes = timestamp.getMinutes()
             return pad(hours) + ":" + pad(minutes)
         },
-        getHourOfDayTimestamp(numOfWeek) {
-            let hours = []
-            let dayOfWeekTimestamp = new Date(this.currentDate.getTime()
-                + this.timeIntervalUntilToday[numOfWeek] * 60 * 60 * 1000)
-            dayOfWeekTimestamp.setHours(6, 0, 0)
-            for (let i = 0; i < 36; i++) {
-                hours.push({
-                    timestamp: new Date(dayOfWeekTimestamp.getTime()),
-                    reservable: false,
-                    reserved: false
-                })
-                dayOfWeekTimestamp = new Date(dayOfWeekTimestamp.getTime() + 30 * 60000)
-            }
-            return hours
-        },
-        getDaysOfWeekTimestamp(numOfWeek) {
-            return new Date(new Date().getTime() + this.timeIntervalUntilToday[numOfWeek] * 60 * 60 * 1000)
-        },
-        fillTheWeekArray() {
-            for (let i = 0; i < 7; i++) {
-                this.week.push({
-                    timestamp: this.getDaysOfWeekTimestamp(i),
-                    hours: this.getHourOfDayTimestamp(i)
-                })
-            }
-        }
-    }
-    ,
+    },
     mounted() {
-        this.fillTheWeekArray()
+        // inorder to fill the week state dispatch createDayOfWeek action
+        // 7 time for every day in a week
+        for (let i = 0; i < 7; i++) {
+            this.$store.dispatch('createDayOfWeek', i)
+        }
     }
 }
 
